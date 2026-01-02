@@ -8,7 +8,32 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Clock, MapPin, Phone } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Calendar, Clock, MapPin, Phone, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+
+type BookingStatus = 'idle' | 'loading' | 'success' | 'error'
+
+// Pre-defined service options
+const SERVICE_OPTIONS = [
+  { value: "haircut", label: "Haircut" },
+  { value: "haircut-styling", label: "Haircut + Styling" },
+  { value: "perm", label: "Perm" },
+  { value: "digital-perm", label: "Digital Perm" },
+  { value: "color", label: "Hair Color" },
+  { value: "highlights", label: "Highlights" },
+  { value: "balayage", label: "Balayage" },
+  { value: "treatment", label: "Hair Treatment" },
+  { value: "keratin", label: "Keratin Treatment" },
+  { value: "styling", label: "Styling Only" },
+  { value: "consultation", label: "Consultation" },
+  { value: "other", label: "Other (specify in notes)" },
+]
 
 export function BookingSection() {
   const [formData, setFormData] = useState({
@@ -16,24 +41,77 @@ export function BookingSection() {
     email: "",
     phone: "",
     service: "",
+    date: "",
+    time: "",
     message: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [status, setStatus] = useState<BookingStatus>('idle')
+  const [responseMessage, setResponseMessage] = useState('')
+
+  const todayLocal = new Date()
+  todayLocal.setMinutes(todayLocal.getMinutes() - todayLocal.getTimezoneOffset())
+  const minDate = todayLocal.toISOString().split('T')[0]
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setStatus('loading')
+    setResponseMessage('')
 
-    // Create Google Calendar event URL
-    const eventTitle = encodeURIComponent(`Hair Appointment - ${formData.name}`)
-    const eventDetails = encodeURIComponent(
-      `Client: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nService: ${formData.service}\nNotes: ${formData.message}`,
-    )
-    const location = encodeURIComponent("Hair Glamour Calgary")
+    try {
+      console.log('Submitting form data:', formData)
+      const response = await fetch('/api/book-appointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
 
-    // Google Calendar URL with pre-filled information
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&details=${eventDetails}&location=${location}`
+      const data = await response.json()
 
-    // Open Google Calendar in new tab
-    window.open(googleCalendarUrl, "_blank")
+      if (response.ok) {
+        setStatus('success')
+        setResponseMessage('Your appointment has been booked! Check your email for the calendar invite.')
+
+        // Reset form after successful booking
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          service: "",
+          date: "",
+          time: "",
+          message: "",
+        })
+
+        // Reset status after 5 seconds
+        setTimeout(() => {
+          setStatus('idle')
+          setResponseMessage('')
+        }, 5000)
+      } else {
+        setStatus('error')
+        setResponseMessage(data.error || 'Failed to book appointment. Please try again.')
+
+        // Reset status after 5 seconds
+        setTimeout(() => {
+          setStatus('idle')
+          setResponseMessage('')
+        }, 5000)
+      }
+    } catch (error) {
+      console.error('Error booking appointment:', error)
+      setStatus('error')
+      setResponseMessage('An error occurred. Please try again or contact us directly.')
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setStatus('idle')
+        setResponseMessage('')
+      }, 5000)
+    }
   }
 
   return (
@@ -45,9 +123,32 @@ export function BookingSection() {
               Book Your Appointment
             </h2>
             <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-              {"Fill out the form below and we'll help you schedule your visit"}
+              {"Fill out the form below and we'll add you to our calendar"}
             </p>
           </div>
+
+          {/* Status Messages */}
+          {status === 'success' && (
+            <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-green-500 bg-green-50 p-4 dark:bg-green-950">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  {responseMessage}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-red-500 bg-red-50 p-4 dark:bg-red-950">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                  {responseMessage}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             <Card className="border-border bg-card lg:col-span-2">
@@ -55,17 +156,18 @@ export function BookingSection() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">Full Name *</Label>
                       <Input
                         id="name"
                         placeholder="Enter your name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
+                        disabled={status === 'loading'}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
                         id="email"
                         type="email"
@@ -73,31 +175,78 @@ export function BookingSection() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
+                        disabled={status === 'loading'}
                       />
                     </div>
                   </div>
 
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">Phone Number *</Label>
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="(123) 456-7890"
+                        placeholder="(123)-456-7890"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         required
+                        disabled={status === 'loading'}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="service">Service Type</Label>
-                      <Input
-                        id="service"
-                        placeholder="e.g., Haircut, Perm, Color"
+                      <Label htmlFor="service">Service Type *</Label>
+                      <Select
                         value={formData.service}
-                        onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                        onValueChange={(value) => setFormData({ ...formData, service: value })}
+                        disabled={status === 'loading'}
+                      >
+                        <SelectTrigger id="service">
+                          <SelectValue placeholder="Select a service" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SERVICE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.label}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Preferred Date</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => {
+                          console.log('Selected date:', e.target.value)
+                          setFormData(prev => ({ ...prev, date: e.target.value }))
+                        }}
+                        min={minDate}
                         required
+                        disabled={status === 'loading'}
                       />
+                      <p className="text-xs text-muted-foreground">We'll confirm availability</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="time">Preferred Time</Label>
+                      <Input
+                        id="time"
+                        type="time"
+                        min="09:00"
+                        max="18:00"
+                        required
+                        value={formData.time}
+                        onChange={(e) => {
+                          console.log('Selected time:', e.target.value)
+                          setFormData(prev => ({ ...prev, time: e.target.value }))
+                        }}
+                        disabled={status === 'loading'}
+                      />
+                      <p className="text-xs text-muted-foreground">We'll confirm availability</p>
                     </div>
                   </div>
 
@@ -109,12 +258,27 @@ export function BookingSection() {
                       rows={4}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      disabled={status === 'loading'}
                     />
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Schedule with Google Calendar
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={status === 'loading'}
+                  >
+                    {status === 'loading' ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Booking...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Book Appointment
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
@@ -152,10 +316,13 @@ export function BookingSection() {
 
               <Card className="border-border bg-secondary/50">
                 <CardContent className="p-6">
-                  <h3 className="mb-2 text-lg font-semibold text-card-foreground">Need Help?</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {"Questions about our services? Feel free to call us and we'll be happy to assist you!"}
-                  </p>
+                  <h3 className="mb-2 text-lg font-semibold text-card-foreground">How It Works</h3>
+                  <ol className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+                    <li>1. Fill out the booking form</li>
+                    <li>2. We'll add you to our calendar</li>
+                    <li>3. You'll receive a calendar invite via email</li>
+                    <li>4. We'll contact you to confirm details</li>
+                  </ol>
                 </CardContent>
               </Card>
             </div>
