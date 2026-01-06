@@ -35,6 +35,28 @@ const SERVICE_OPTIONS = [
   { value: "other", label: "Other (specify in notes)" },
 ]
 
+const TIME_SLOTS = [
+  { value: "09:00", label: "9:00 AM" },
+  { value: "09:30", label: "9:30 AM" },
+  { value: "10:00", label: "10:00 AM" },
+  { value: "10:30", label: "10:30 AM" },
+  { value: "11:00", label: "11:00 AM" },
+  { value: "11:30", label: "11:30 AM" },
+  { value: "12:00", label: "12:00 PM" },
+  { value: "12:30", label: "12:30 PM" },
+  { value: "13:00", label: "1:00 PM" },
+  { value: "13:30", label: "1:30 PM" },
+  { value: "14:00", label: "2:00 PM" },
+  { value: "14:30", label: "2:30 PM" },
+  { value: "15:00", label: "3:00 PM" },
+  { value: "15:30", label: "3:30 PM" },
+  { value: "16:00", label: "4:00 PM" },
+  { value: "16:30", label: "4:30 PM" },
+  { value: "17:00", label: "5:00 PM" },
+  { value: "17:30", label: "5:30 PM" },
+  { value: "18:00", label: "6:00 PM" },
+]
+
 export function BookingSection() {
   const [formData, setFormData] = useState({
     name: "",
@@ -233,19 +255,25 @@ export function BookingSection() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="time">Preferred Time</Label>
-                      <Input
-                        id="time"
-                        type="time"
-                        min="09:00"
-                        max="18:00"
-                        required
+                      <Select
                         value={formData.time}
-                        onChange={(e) => {
-                          console.log('Selected time:', e.target.value)
-                          setFormData(prev => ({ ...prev, time: e.target.value }))
+                        onValueChange={(value) => {
+                          console.log('Selected time:', value)
+                          setFormData(prev => ({...prev, time: value}))
                         }}
                         disabled={status === 'loading'}
-                      />
+                      >
+                        <SelectTrigger id="time">
+                          <SelectValue placeholder="Select a time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.map((slot) => (
+                            <SelectItem key={slot.value} value={slot.value}>
+                              {slot.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <p className="text-xs text-muted-foreground">We'll confirm availability</p>
                     </div>
                   </div>
