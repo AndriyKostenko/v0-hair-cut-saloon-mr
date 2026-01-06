@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Scissors } from "lucide-react"
+import Image from 'next/image'
 
 export function HeroSection() {
   const scrollToBooking = () => {
@@ -10,7 +11,7 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-background">
-      <div className="absolute inset-0 bg-[url('/modern-minimalist-korean-hair-salon-interior.jpg')] bg-cover bg-center opacity-10" />
+      <div className="absolute inset-0 bg-[url('/hero-background.jpg')] bg-cover bg-center opacity-40" />
 
       <div className="container relative z-10 mx-auto px-4 text-center">
         <div className="mx-auto max-w-4xl space-y-8">
@@ -36,7 +37,7 @@ export function HeroSection() {
             <Button
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto text-base bg-transparent"
+              className="w-full sm:w-auto text-base"
               onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })}
             >
               View Services

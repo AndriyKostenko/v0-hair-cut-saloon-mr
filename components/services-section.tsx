@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Scissors, Sparkles, Palette, Users } from "lucide-react"
+import Image from "next/image"
 
 const services = [
   {
@@ -36,6 +37,20 @@ export function ServicesSection() {
             Professional hair care services designed to bring out your best look
           </p>
         </div>
+
+        <div className="flex justify-center">
+          <div className="overflow-hidden rounded-2xl">
+            <Image
+              src="/cutting_1.png"
+              alt="Professional hair styling in action"
+              width={200}
+              height={200}
+              className="object-cover"
+              priority
+            />
+          </div>
+        </div>
+
 
         <div className="mx-auto mt-16 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {services.map((service, index) => (
