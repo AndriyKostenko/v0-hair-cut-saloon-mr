@@ -9,11 +9,6 @@ export async function POST(request: Request) {
     })
   }
 
-  // reCAPTCHA v3 secret keys are typically 40 characters
-  if (RECAPTCHA_SECRET_KEY.length < 40) {
-    console.error("[v0] WARNING: Secret key appears to be too short. reCAPTCHA v3 secrets are typically 40 characters.")
-    console.error("[v0] Please verify you're using the correct secret key that matches your site key.")
-  }
 
   const { token } = await request.json()
 
@@ -63,7 +58,7 @@ export async function POST(request: Request) {
       const score = data.score ?? 1.0
       console.log("[v0] reCAPTCHA score:", score)
 
-      if (score >= 0.3) {
+      if (score >= 0.5) {
         return Response.json({ success: true, score }, { status: 200 })
       } else {
         return Response.json({ success: false, error: "Low score", score, details: data }, { status: 400 })
