@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     const data = await response.json()
 
-    if (data.success && data.score >= 0.5 && data.action === 'booking_form_submit') {
+    if (data.success && data.score >= 0.3) {
         // Proceed with form processing
         return Response.json({ success: true }, { status: 200 });
       }
