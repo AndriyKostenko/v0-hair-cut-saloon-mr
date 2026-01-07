@@ -9,13 +9,15 @@ export async function POST(request: Request) {
     })
   }
 
-  console.log("[v0] Secret key exists:", !!RECAPTCHA_SECRET_KEY)
-  console.log("[v0] Secret key length:", RECAPTCHA_SECRET_KEY.length)
+  // reCAPTCHA v3 secret keys are typically 40 characters
+  if (RECAPTCHA_SECRET_KEY.length < 40) {
+    console.error("[v0] WARNING: Secret key appears to be too short. reCAPTCHA v3 secrets are typically 40 characters.")
+    console.error("[v0] Please verify you're using the correct secret key that matches your site key.")
+  }
 
   const { token } = await request.json()
 
-  console.log("[v0] Received token:", token)
-  console.log("[v0] Token length:", token?.length)
+
 
   if (!token) {
     return new Response(JSON.stringify({ error: "Token is required" }), {
@@ -42,6 +44,19 @@ export async function POST(request: Request) {
 
     if (data["error-codes"]) {
       console.error("[v0] reCAPTCHA error codes:", data["error-codes"])
+
+      if (data["error-codes"].includes("invalid-input-response")) {
+        console.error("[v0] ERROR: The response token is not valid for this secret key.")
+        console.error("[v0] This usually means:")
+        console.error("[v0] 1. The secret key doesn't match the site key used to generate the token")
+        console.error("[v0] 2. The token has expired (tokens are valid for 2 minutes)")
+        console.error("[v0] 3. The secret key is incorrect or from a different reCAPTCHA project")
+        console.error("[v0] Please verify your RECAPTCHA_SECRET_KEY matches your NEXT_PUBLIC_RECAPTCHA_SITE_KEY")
+      }
+
+      if (data["error-codes"].includes("invalid-input-secret")) {
+        console.error("[v0] ERROR: The secret key is invalid. Please check your environment variable.")
+      }
     }
 
     if (data.success) {
