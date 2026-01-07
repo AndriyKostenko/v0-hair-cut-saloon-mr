@@ -16,6 +16,12 @@ async function getCalendarClient() {
   return google.calendar({ version: 'v3', auth })
 }
 
+function addMinutes(time: string, minutes: number) {
+  const [h, m] = time.split(':').map(Number)
+  const d = new Date(0, 0, 0, h, m + minutes)
+  return d.toTimeString().slice(0,5)
+}
+
 export async function POST(request: Request) {
   try {
     // Parse the request body
@@ -43,18 +49,8 @@ export async function POST(request: Request) {
     const calendar = await getCalendarClient()
 
     // Parse date and time
-    const dateTimeString = `${date}T${time}:00`
-    const startDateTime = new Date(dateTimeString)
+    const startDateTime = `${date}T${time}:00`
 
-    // Validate the date is valid
-    if (isNaN(startDateTime.getTime())) {
-      return NextResponse.json(
-        { error: 'Invalid date or time format' },
-        { status: 400 }
-      )
-    }
-
-    const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000) // 1 hour duration
 
     // Create event object
     const event = {
@@ -71,11 +67,11 @@ export async function POST(request: Request) {
                 This appointment was booked through the Hair Glamour website.
       `.trim(),
       start: {
-        dateTime: startDateTime.toISOString(),
+        dateTime: startDateTime,
         timeZone: 'America/Edmonton', // Calgary timezone
       },
       end: {
-        dateTime: endDateTime.toISOString(),
+        dateTime: `${date}T${addMinutes(time, 20)}:00`,
         timeZone: 'America/Edmonton',
       }
     }

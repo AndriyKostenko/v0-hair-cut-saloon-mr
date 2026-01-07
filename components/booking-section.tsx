@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Calendar, Clock, MapPin, Phone, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import {useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 type BookingStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -74,48 +75,88 @@ export function BookingSection() {
   const todayLocal = new Date()
   todayLocal.setMinutes(todayLocal.getMinutes() - todayLocal.getTimezoneOffset())
   const minDate = todayLocal.toISOString().split('T')[0]
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('loading')
     setResponseMessage('')
+    if (!executeRecaptcha) {
+      setStatus('error')
+      setResponseMessage('reCAPTCHA not yet available. Please try again later.')
+      return;
+    }
 
-    try {
-      console.log('Submitting form data:', formData)
-      const response = await fetch('/api/book-appointment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+    const token = await executeRecaptcha('booking_form_submit');
 
-      const data = await response.json()
+    const response = await fetch("/api/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    })
 
-      if (response.ok) {
-        setStatus('success')
-        setResponseMessage('Your appointment has been booked! Check your email for the calendar invite.')
+    const verifyData = await response.json();
 
-        // Reset form after successful booking
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          service: "",
-          date: "",
-          time: "",
-          message: "",
+    if (!response.ok || !verifyData.success) {
+      setStatus('error')
+      setResponseMessage('reCAPTCHA verification failed. Please try again.')
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setStatus('idle')
+        setResponseMessage('')
+      }, 5000)
+      return;
+    } else {
+      try {
+        console.log('Submitting form data:', formData)
+        const response = await fetch('/api/book-appointment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
         })
 
-        // Reset status after 5 seconds
-        setTimeout(() => {
-          setStatus('idle')
-          setResponseMessage('')
-        }, 5000)
-      } else {
+        const data = await response.json()
+
+        if (response.ok) {
+          setStatus('success')
+          setResponseMessage('Your appointment has been booked! Check your email for the calendar invite.')
+
+          // Reset form after successful booking
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            service: "",
+            date: "",
+            time: "",
+            message: "",
+          })
+
+          // Reset status after 5 seconds
+          setTimeout(() => {
+            setStatus('idle')
+            setResponseMessage('')
+          }, 5000)
+        } else {
+          setStatus('error')
+          setResponseMessage(data.error || 'Failed to book appointment. Please try again.')
+
+          // Reset status after 5 seconds
+          setTimeout(() => {
+            setStatus('idle')
+            setResponseMessage('')
+          }, 5000)
+        }
+      } catch (error) {
+        console.error('Error booking appointment:', error)
         setStatus('error')
-        setResponseMessage(data.error || 'Failed to book appointment. Please try again.')
+        setResponseMessage('An error occurred. Please try again or contact us directly.')
 
         // Reset status after 5 seconds
         setTimeout(() => {
@@ -123,18 +164,12 @@ export function BookingSection() {
           setResponseMessage('')
         }, 5000)
       }
-    } catch (error) {
-      console.error('Error booking appointment:', error)
-      setStatus('error')
-      setResponseMessage('An error occurred. Please try again or contact us directly.')
-
-      // Reset status after 5 seconds
-      setTimeout(() => {
-        setStatus('idle')
-        setResponseMessage('')
-      }, 5000)
     }
   }
+
+
+
+
 
   return (
     <section id="booking" className="bg-secondary/20 py-20 sm:py-24">
@@ -148,29 +183,6 @@ export function BookingSection() {
               {"Fill out the form below and we'll add you to our calendar"}
             </p>
           </div>
-
-          {/* Status Messages */}
-          {status === 'success' && (
-            <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-green-500 bg-green-50 p-4 dark:bg-green-950">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                  {responseMessage}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {status === 'error' && (
-            <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-red-500 bg-red-50 p-4 dark:bg-red-950">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                  {responseMessage}
-                </p>
-              </div>
-            </div>
-          )}
 
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             <Card className="border-border bg-card lg:col-span-2">
@@ -308,6 +320,42 @@ export function BookingSection() {
                       </>
                     )}
                   </Button>
+
+                  {/* Status Messages - Now inside the form card */}
+                  {status === 'success' && (
+                    <div className="rounded-lg border border-green-500 bg-green-50 p-4 dark:bg-green-950">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                          {responseMessage}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {status === 'error' && (
+                    <div className="rounded-lg border border-red-500 bg-red-50 p-4 dark:bg-red-950">
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                          {responseMessage}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* reCAPTCHA Notice */}
+                  <p className="text-center text-xs text-muted-foreground">
+                     This site is protected by reCAPTCHA and the Google{' '}
+                     <a href="https://policies.google.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">
+                       Privacy Policy
+                     </a>{' '}
+                     and{' '}
+                     <a href="https://policies.google.com/terms" className="underline" target="_blank" rel="noopener noreferrer">
+                       Terms of Service
+                     </a>{' '}
+                     apply.
+                   </p>
                 </form>
               </CardContent>
             </Card>
