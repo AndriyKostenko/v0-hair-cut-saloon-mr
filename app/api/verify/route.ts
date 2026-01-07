@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     })
 
     const data = await response.json()
-    console.flog(data)
+    console.log(data)
 
     if (data.success && data.score >= 0.3) {
         // Proceed with form processing
