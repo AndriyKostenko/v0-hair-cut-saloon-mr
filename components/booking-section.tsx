@@ -8,17 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Clock, MapPin, Phone, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
-import {useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { useGoogleReCaptcha, GoogleReCaptchaProvider } from "react-google-recaptcha-v3"
 
-type BookingStatus = 'idle' | 'loading' | 'success' | 'error'
+type BookingStatus = "idle" | "loading" | "success" | "error"
 
 // Pre-defined service options
 const SERVICE_OPTIONS = [
@@ -58,7 +52,7 @@ const TIME_SLOTS = [
   { value: "18:00", label: "6:00 PM" },
 ]
 
-export function BookingSection() {
+function BookingSectionContent() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,26 +63,25 @@ export function BookingSection() {
     message: "",
   })
 
-  const [status, setStatus] = useState<BookingStatus>('idle')
-  const [responseMessage, setResponseMessage] = useState('')
+  const [status, setStatus] = useState<BookingStatus>("idle")
+  const [responseMessage, setResponseMessage] = useState("")
+  const { executeRecaptcha } = useGoogleReCaptcha()
 
   const todayLocal = new Date()
   todayLocal.setMinutes(todayLocal.getMinutes() - todayLocal.getTimezoneOffset())
-  const minDate = todayLocal.toISOString().split('T')[0]
-  const { executeRecaptcha } = useGoogleReCaptcha();
-
+  const minDate = todayLocal.toISOString().split("T")[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setStatus('loading')
-    setResponseMessage('')
+    setStatus("loading")
+    setResponseMessage("")
     if (!executeRecaptcha) {
-      setStatus('error')
-      setResponseMessage('reCAPTCHA not yet available. Please try again later.')
-      return;
+      setStatus("error")
+      setResponseMessage("reCAPTCHA not yet available. Please try again later.")
+      return
     }
 
-    const token = await executeRecaptcha('booking_form_submit');
+    const token = await executeRecaptcha("booking_form_submit")
 
     const response = await fetch("/api/verify", {
       method: "POST",
@@ -98,25 +91,25 @@ export function BookingSection() {
       body: JSON.stringify({ token }),
     })
 
-    const verifyData = await response.json();
+    const verifyData = await response.json()
 
     if (!response.ok || !verifyData.success) {
-      setStatus('error')
-      setResponseMessage('reCAPTCHA verification failed. Please try again.')
+      setStatus("error")
+      setResponseMessage("reCAPTCHA verification failed. Please try again.")
 
       // Reset status after 5 seconds
       setTimeout(() => {
-        setStatus('idle')
-        setResponseMessage('')
+        setStatus("idle")
+        setResponseMessage("")
       }, 5000)
-      return;
+      return
     } else {
       try {
-        console.log('Submitting form data:', formData)
-        const response = await fetch('/api/book-appointment', {
-          method: 'POST',
+        console.log("Submitting form data:", formData)
+        const response = await fetch("/api/book-appointment", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
         })
@@ -124,8 +117,8 @@ export function BookingSection() {
         const data = await response.json()
 
         if (response.ok) {
-          setStatus('success')
-          setResponseMessage('Your appointment has been booked! Check your email for the calendar invite.')
+          setStatus("success")
+          setResponseMessage("Your appointment has been booked! Check your email for the calendar invite.")
 
           // Reset form after successful booking
           setFormData({
@@ -140,36 +133,32 @@ export function BookingSection() {
 
           // Reset status after 5 seconds
           setTimeout(() => {
-            setStatus('idle')
-            setResponseMessage('')
+            setStatus("idle")
+            setResponseMessage("")
           }, 5000)
         } else {
-          setStatus('error')
-          setResponseMessage(data.error || 'Failed to book appointment. Please try again.')
+          setStatus("error")
+          setResponseMessage(data.error || "Failed to book appointment. Please try again.")
 
           // Reset status after 5 seconds
           setTimeout(() => {
-            setStatus('idle')
-            setResponseMessage('')
+            setStatus("idle")
+            setResponseMessage("")
           }, 5000)
         }
       } catch (error) {
-        console.error('Error booking appointment:', error)
-        setStatus('error')
-        setResponseMessage('An error occurred. Please try again or contact us directly.')
+        console.error("Error booking appointment:", error)
+        setStatus("error")
+        setResponseMessage("An error occurred. Please try again or contact us directly.")
 
         // Reset status after 5 seconds
         setTimeout(() => {
-          setStatus('idle')
-          setResponseMessage('')
+          setStatus("idle")
+          setResponseMessage("")
         }, 5000)
       }
     }
   }
-
-
-
-
 
   return (
     <section id="booking" className="bg-secondary/20 py-20 sm:py-24">
@@ -197,7 +186,7 @@ export function BookingSection() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       />
                     </div>
                     <div className="space-y-2">
@@ -209,7 +198,7 @@ export function BookingSection() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       />
                     </div>
                   </div>
@@ -224,7 +213,7 @@ export function BookingSection() {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         required
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       />
                     </div>
                     <div className="space-y-2">
@@ -232,7 +221,7 @@ export function BookingSection() {
                       <Select
                         value={formData.service}
                         onValueChange={(value) => setFormData({ ...formData, service: value })}
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       >
                         <SelectTrigger id="service">
                           <SelectValue placeholder="Select a service" />
@@ -256,12 +245,12 @@ export function BookingSection() {
                         type="date"
                         value={formData.date}
                         onChange={(e) => {
-                          console.log('Selected date:', e.target.value)
-                          setFormData(prev => ({ ...prev, date: e.target.value }))
+                          console.log("Selected date:", e.target.value)
+                          setFormData((prev) => ({ ...prev, date: e.target.value }))
                         }}
                         min={minDate}
                         required
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       />
                       <p className="text-xs text-muted-foreground">We'll confirm availability</p>
                     </div>
@@ -270,10 +259,10 @@ export function BookingSection() {
                       <Select
                         value={formData.time}
                         onValueChange={(value) => {
-                          console.log('Selected time:', value)
-                          setFormData(prev => ({...prev, time: value}))
+                          console.log("Selected time:", value)
+                          setFormData((prev) => ({ ...prev, time: value }))
                         }}
-                        disabled={status === 'loading'}
+                        disabled={status === "loading"}
                       >
                         <SelectTrigger id="time">
                           <SelectValue placeholder="Select a time" />
@@ -298,17 +287,12 @@ export function BookingSection() {
                       rows={4}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      disabled={status === 'loading'}
+                      disabled={status === "loading"}
                     />
                   </div>
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full"
-                    disabled={status === 'loading'}
-                  >
-                    {status === 'loading' ? (
+                  <Button type="submit" size="lg" className="w-full" disabled={status === "loading"}>
+                    {status === "loading" ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Booking...
@@ -322,40 +306,46 @@ export function BookingSection() {
                   </Button>
 
                   {/* Status Messages - Now inside the form card */}
-                  {status === 'success' && (
+                  {status === "success" && (
                     <div className="rounded-lg border border-green-500 bg-green-50 p-4 dark:bg-green-950">
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
-                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                          {responseMessage}
-                        </p>
+                        <p className="text-sm font-medium text-green-800 dark:text-green-200">{responseMessage}</p>
                       </div>
                     </div>
                   )}
 
-                  {status === 'error' && (
+                  {status === "error" && (
                     <div className="rounded-lg border border-red-500 bg-red-50 p-4 dark:bg-red-950">
                       <div className="flex items-center gap-3">
                         <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                          {responseMessage}
-                        </p>
+                        <p className="text-sm font-medium text-red-800 dark:text-red-200">{responseMessage}</p>
                       </div>
                     </div>
                   )}
 
                   {/* reCAPTCHA Notice */}
                   <p className="text-center text-xs text-muted-foreground">
-                     This site is protected by reCAPTCHA and the Google{' '}
-                     <a href="https://policies.google.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">
-                       Privacy Policy
-                     </a>{' '}
-                     and{' '}
-                     <a href="https://policies.google.com/terms" className="underline" target="_blank" rel="noopener noreferrer">
-                       Terms of Service
-                     </a>{' '}
-                     apply.
-                   </p>
+                    This site is protected by reCAPTCHA and the Google{" "}
+                    <a
+                      href="https://policies.google.com/privacy"
+                      className="underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Privacy Policy
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="https://policies.google.com/terms"
+                      className="underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    apply.
+                  </p>
                 </form>
               </CardContent>
             </Card>
@@ -406,5 +396,13 @@ export function BookingSection() {
         </div>
       </div>
     </section>
+  )
+}
+
+export function BookingSection({ recaptchaKey }: { recaptchaKey: string }) {
+  return (
+    <GoogleReCaptchaProvider reCaptchaKey={recaptchaKey}>
+      <BookingSectionContent />
+    </GoogleReCaptchaProvider>
   )
 }
