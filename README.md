@@ -1,30 +1,42 @@
-# Korean haircut salon
+# Korean Haircut Salon 💇‍♂️
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+A modern, full-featured web application for a Korean haircut salon built with Next.js. This project provides an elegant booking system with Google Calendar integration, email notifications, and a beautiful UI.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/wil-globo/v0-hair-cut-saloon)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/uf8h2CpqPNQ)
+## ✨ Features
 
-## Overview
+- 📅 **Appointment Booking System** - Easy-to-use booking interface
+- 🗓️ **Google Calendar Integration** - Automatic calendar synchronization
+- 📧 **Email Notifications** - Powered by Resend and React Email
+- 🎨 **Modern UI** - Built with Radix UI components and Tailwind CSS
+- 🌙 **Dark Mode Support** - Theme switching with next-themes
+- 📱 **Responsive Design** - Works seamlessly on all devices
+- 🔒 **reCAPTCHA Protection** - Spam prevention on forms
+- ♿ **Accessible** - Built with accessibility in mind using Radix UI
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## 🛠️ Tech Stack
 
-## Deployment
+- **[Next.js 16](https://nextjs.org/)** - React framework with App Router
+- **[Resend](https://resend.com/)** - Email delivery service
+- **[React Email](https://react.email/)** - Email template components
+- **[Google APIs](https://github.com/googleapis/google-api-nodejs-client)** - Google Calendar integration
+- **[reCAPTCHA v3](https://www.google.com/recaptcha/)** - Bot protection
 
-Your project is live at:
+### Analytics & Performance
+- **[@vercel/analytics](https://vercel.com/analytics)** - Web analytics
 
-**[https://vercel.com/wil-globo/v0-hair-cut-saloon](https://vercel.com/wil-globo/v0-hair-cut-saloon)**
+## 📋 Prerequisites
 
-## Build your app
+Before you begin, ensure you have the following installed:
+- **Node.js** 18.x or later
+- **npm**, **yarn**, or **pnpm** package manager
+- **Git** for version control
 
-Continue building your app on:
+## 🚀 Getting Started
 
-**[https://v0.app/chat/uf8h2CpqPNQ](https://v0.app/chat/uf8h2CpqPNQ)**
+### 1. Clone the Repository
 
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+```bash
+git clone https://github.com/your-username/v0-hair-cut-saloon-mr.git
+cd v0-hair-cut-saloon-mr
+npm install
+npm run dev
