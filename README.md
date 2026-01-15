@@ -33,14 +33,13 @@ Before you begin, ensure you have the following installed:
 
 ## 🚀 Getting Started
 
-```bash
+\`\`\`bash
 git clone https://github.com/your-username/v0-hair-cut-saloon-mr.git
 cd v0-hair-cut-saloon-mr
 npm install
 npm run dev
-```
+\`\`\`
 
 <img width="1728" height="1084" alt="Screenshot 2026-01-13 at 11 32 48" src="https://github.com/user-attachments/assets/631da15b-c887-4ae7-b9c6-ec0887c8becd" />
 <img width="1728" height="1084" alt="Screenshot 2026-01-13 at 11 32 58" src="https://github.com/user-attachments/assets/80b96260-8375-48fd-8fee-7073e3c60ef7" />
 <img width="1728" height="1084" alt="Screenshot 2026-01-13 at 11 33 07" src="https://github.com/user-attachments/assets/e629cedb-703d-4094-8dd1-de1137878c5e" />
-
