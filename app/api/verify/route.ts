@@ -7,7 +7,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     })
   }
-  
+
   const { token } = await request.json()
   if (!token) {
     return new Response(JSON.stringify({ error: "Token is required" }), {
@@ -28,9 +28,9 @@ export async function POST(request: Request) {
 
     const data = await response.json()
 
-    if (data.success && score >= 0.5) {
-      return Response.json({ success: true, score }, { status: 200 })
-    } 
+    if (data.success && data.score >= 0.5) {
+      return Response.json({ success: true, score: data.score }, { status: 200 })
+    }
     return Response.json({ success: false, error: "Verification failed", details: data }, { status: 400 })
   } catch (error) {
     return new Response(JSON.stringify({ error: "reCAPTCHA verification failed", details: String(error) }), {

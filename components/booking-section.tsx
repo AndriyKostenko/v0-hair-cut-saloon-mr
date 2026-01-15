@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,9 +67,45 @@ function BookingSectionContent() {
   const [responseMessage, setResponseMessage] = useState("")
   const { executeRecaptcha } = useGoogleReCaptcha()
 
-  const todayLocal = new Date()
-  todayLocal.setMinutes(todayLocal.getMinutes() - todayLocal.getTimezoneOffset())
-  const minDate = todayLocal.toISOString().split("T")[0]
+  // Get today's date in YYYY-MM-DD format for the date input min attribute
+  const today = new Date()
+  const minDate = today.toLocaleDateString('en-CA') // en-CA uses YYYY-MM-DD format
+
+  // Filter time slots based on selected date
+  const availableTimeSlots = useMemo(() => {
+    if (!formData.date) {
+      return TIME_SLOTS
+    }
+
+    // Check if selected date is today
+    const selectedDate = formData.date
+    const isToday = selectedDate === minDate
+
+    if (!isToday) {
+      // If it's a future date, show all time slots
+      return TIME_SLOTS
+    }
+
+    // If it's today, filter out past times
+    const now = new Date()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const currentTimeInMinutes = currentHour * 60 + currentMinute
+
+    return TIME_SLOTS.filter(slot => {
+      const [hours, minutes] = slot.value.split(':').map(Number)
+      const slotTimeInMinutes = hours * 60 + minutes
+      // Only show time slots that are at least 30 minutes in the future
+      return slotTimeInMinutes >= currentTimeInMinutes + 30
+    })
+  }, [formData.date, minDate])
+
+  // Clear the selected time if it becomes unavailable
+  useMemo(() => {
+    if (formData.time && !availableTimeSlots.find(slot => slot.value === formData.time)) {
+      setFormData(prev => ({ ...prev, time: "" }))
+    }
+  }, [availableTimeSlots, formData.time])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -262,20 +298,24 @@ function BookingSectionContent() {
                           console.log("Selected time:", value)
                           setFormData((prev) => ({ ...prev, time: value }))
                         }}
-                        disabled={status === "loading"}
+                        disabled={status === "loading" || availableTimeSlots.length === 0}
                       >
                         <SelectTrigger id="time">
-                          <SelectValue placeholder="Select a time" />
+                          <SelectValue placeholder={availableTimeSlots.length === 0 ? "No times available today" : "Select a time"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {TIME_SLOTS.map((slot) => (
+                          {availableTimeSlots.map((slot) => (
                             <SelectItem key={slot.value} value={slot.value}>
                               {slot.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">We'll confirm availability</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.date === minDate && availableTimeSlots.length > 0
+                          ? "Only future times shown for today"
+                          : "We'll confirm availability"}
+                      </p>
                     </div>
                   </div>
 
