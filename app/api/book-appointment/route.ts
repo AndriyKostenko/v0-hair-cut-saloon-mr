@@ -101,8 +101,9 @@ export async function POST(request: Request) {
 
     // Send confirmation email to customer
     try {
-      const { data, error } = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL,
+		const { data, error } = await resend.emails.send({
+		from: "onboarding@resend.dev",
+        // from: process.env.RESEND_FROM_EMAIL,
         to: email,
         subject: `Appointment Confirmed - ${formattedDate}`,
         react: BookingConfirmationEmail({
@@ -128,8 +129,9 @@ export async function POST(request: Request) {
     // Send notification email to salon
     if (process.env.SALON_EMAIL) {
       try {
-        const { data, error } = await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL,
+		  const { data, error } = await resend.emails.send({
+		  from: "onboarding@resend.dev",
+          //from: process.env.RESEND_FROM_EMAIL,
           to: process.env.SALON_EMAIL,
           subject: `New Booking: ${name} - ${formattedDate}`,
           react: SalonNotificationEmail({

@@ -65,7 +65,8 @@ function BookingSectionContent() {
 
   const [status, setStatus] = useState<BookingStatus>("idle")
   const [responseMessage, setResponseMessage] = useState("")
-  const { executeRecaptcha } = useGoogleReCaptcha()
+  const [submitted, setSubmitted] = useState(false)
+  //const { executeRecaptcha } = useGoogleReCaptcha()
 
   // Get today's date in YYYY-MM-DD format for the date input min attribute
   const today = new Date()
@@ -109,83 +110,74 @@ function BookingSectionContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitted(true)
     setStatus("loading")
     setResponseMessage("")
-    if (!executeRecaptcha) {
-      setStatus("error")
-      setResponseMessage("reCAPTCHA not yet available. Please try again later.")
-      return
-    }
+    // if (!executeRecaptcha) {
+    //   setStatus("error")
+    //   setResponseMessage("reCAPTCHA not yet available. Please try again later.")
+    //   return
+    // }
 
-    const token = await executeRecaptcha("booking_form_submit")
+    // const token = await executeRecaptcha("booking_form_submit")
 
-    const response = await fetch("/api/verify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token }),
-    })
+    // const response = await fetch("/api/verify", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ token }),
+    // })
 
-    const verifyData = await response.json()
+    // const verifyData = await response.json()
 
-    if (!response.ok || !verifyData.success) {
-      setStatus("error")
-      setResponseMessage("reCAPTCHA verification failed. Please try again.")
+    // if (!response.ok || !verifyData.success) {
+    //   setStatus("error")
+    //   setResponseMessage("reCAPTCHA verification failed. Please try again.")
 
-      // Reset status after 5 seconds
-      setTimeout(() => {
-        setStatus("idle")
-        setResponseMessage("")
-      }, 5000)
-      return
-    } else {
-      try {
-        console.log("Submitting form data:", formData)
-        const response = await fetch("/api/book-appointment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+    //   // Reset status after 5 seconds
+    //   setTimeout(() => {
+    //     setStatus("idle")
+    //     setResponseMessage("")
+    //   }, 5000)
+    //   return
+    // } else {
+    try {
+      console.log("Submitting form data:", formData)
+      const response = await fetch("/api/book-appointment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setStatus("success")
+        setResponseMessage("Your appointment has been booked! Check your email for the calendar invite.")
+        setSubmitted(false)
+
+        // Reset form after successful booking
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          service: "",
+          date: "",
+          time: "",
+          message: "",
         })
 
-        const data = await response.json()
-
-        if (response.ok) {
-          setStatus("success")
-          setResponseMessage("Your appointment has been booked! Check your email for the calendar invite.")
-
-          // Reset form after successful booking
-          setFormData({
-            name: "",
-            email: "",
-            phone: "",
-            service: "",
-            date: "",
-            time: "",
-            message: "",
-          })
-
-          // Reset status after 5 seconds
-          setTimeout(() => {
-            setStatus("idle")
-            setResponseMessage("")
-          }, 5000)
-        } else {
-          setStatus("error")
-          setResponseMessage(data.error || "Failed to book appointment. Please try again.")
-
-          // Reset status after 5 seconds
-          setTimeout(() => {
-            setStatus("idle")
-            setResponseMessage("")
-          }, 5000)
-        }
-      } catch (error) {
-        console.error("Error booking appointment:", error)
+        // Reset status after 5 seconds
+        setTimeout(() => {
+          setStatus("idle")
+          setResponseMessage("")
+        }, 5000)
+      } else {
         setStatus("error")
-        setResponseMessage("An error occurred. Please try again or contact us directly.")
+        setResponseMessage(data.error || "Failed to book appointment. Please try again.")
 
         // Reset status after 5 seconds
         setTimeout(() => {
@@ -193,8 +185,19 @@ function BookingSectionContent() {
           setResponseMessage("")
         }, 5000)
       }
+    } catch (error) {
+      console.error("Error booking appointment:", error)
+      setStatus("error")
+      setResponseMessage("An error occurred. Please try again or contact us directly.")
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setStatus("idle")
+        setResponseMessage("")
+      }, 5000)
     }
   }
+
 
   return (
     <section id="booking" className="bg-secondary/20 py-20 sm:py-24">
@@ -223,6 +226,7 @@ function BookingSectionContent() {
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
                         disabled={status === "loading"}
+                        className={submitted && !formData.name ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
                     </div>
                     <div className="space-y-2">
@@ -235,6 +239,7 @@ function BookingSectionContent() {
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
                         disabled={status === "loading"}
+                        className={submitted && !formData.email ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
                     </div>
                   </div>
@@ -250,6 +255,7 @@ function BookingSectionContent() {
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         required
                         disabled={status === "loading"}
+                        className={submitted && !formData.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
                     </div>
                     <div className="space-y-2">
@@ -259,7 +265,7 @@ function BookingSectionContent() {
                         onValueChange={(value) => setFormData({ ...formData, service: value })}
                         disabled={status === "loading"}
                       >
-                        <SelectTrigger id="service">
+                        <SelectTrigger id="service" className={submitted && !formData.service ? "border-red-500 focus:ring-red-500" : ""}>
                           <SelectValue placeholder="Select a service" />
                         </SelectTrigger>
                         <SelectContent>
@@ -287,6 +293,7 @@ function BookingSectionContent() {
                         min={minDate}
                         required
                         disabled={status === "loading"}
+                        className={submitted && !formData.date ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
                       <p className="text-xs text-muted-foreground">We'll confirm availability</p>
                     </div>
@@ -300,7 +307,7 @@ function BookingSectionContent() {
                         }}
                         disabled={status === "loading" || availableTimeSlots.length === 0}
                       >
-                        <SelectTrigger id="time">
+                        <SelectTrigger id="time" className={submitted && !formData.time ? "border-red-500 focus:ring-red-500" : ""}>
                           <SelectValue placeholder={availableTimeSlots.length === 0 ? "No times available today" : "Select a time"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -439,10 +446,9 @@ function BookingSectionContent() {
   )
 }
 
-export function BookingSection({ recaptchaKey }: { recaptchaKey: string }) {
+export function BookingSection() {
   return (
-    <GoogleReCaptchaProvider reCaptchaKey={recaptchaKey}>
-      <BookingSectionContent />
-    </GoogleReCaptchaProvider>
+  
+      <BookingSectionContent/>
   )
 }
