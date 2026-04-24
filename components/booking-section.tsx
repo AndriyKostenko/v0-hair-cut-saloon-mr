@@ -434,7 +434,7 @@ function BookingSectionContent() {
                     <li>1. Fill out the booking form</li>
                     <li>2. We'll add you to our calendar</li>
                     <li>3. You'll receive a calendar invite via email</li>
-                    <li>4. We'll contact you to confirm details</li>
+                    <li>4. We'll contact you to confirm details !</li>
                   </ol>
                 </CardContent>
               </Card>
@@ -448,7 +448,6 @@ function BookingSectionContent() {
 
 export function BookingSection() {
   return (
-  
       <BookingSectionContent/>
   )
 }
